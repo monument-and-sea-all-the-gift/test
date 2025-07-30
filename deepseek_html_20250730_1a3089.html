@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星河音乐墙 - 流动歌曲名展示</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #starCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            z-index: 2;
+            position: relative;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            animation: fadeIn 1.5s ease-out;
+        }
+        
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 15px rgba(100, 149, 237, 0.8);
+            background: linear-gradient(to right, #8e9eab, #eef2f3);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 2px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .song-container {
+            flex: 3;
+            min-width: 300px;
+            background: rgba(10, 15, 35, 0.7);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 149, 237, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .controls {
+            flex: 1;
+            min-width: 250px;
+            background: rgba(10, 15, 35, 0.7);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 149, 237, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #6495ed;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .songs-wrapper {
+            height: 500px;
+            overflow: hidden;
+            position: relative;
+            border-radius: 10px;
+            background: rgba(5, 10, 25, 0.4);
+            padding: 15px;
+        }
+        
+        .song-track {
+            position: absolute;
+            width: 100%;
+            animation: scrollTracks 20s linear infinite;
+        }
+        
+        .song-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(70, 130, 180, 0.2);
+            border-radius: 8px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-left: 4px solid #6495ed;
+        }
+        
+        .song-item:hover {
+            background: rgba(70, 130, 180, 0.4);
+            transform: translateX(5px);
+        }
+        
+        .song-item i {
+            margin-right: 15px;
+            color: #ff7f50;
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+        }
+        
+        .control-title {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            color: #ff7f50;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 12px;
+            background: rgba(5, 10, 25, 0.4);
+            border: 1px solid #6495ed;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            resize: vertical;
+        }
+        
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            background: linear-gradient(45deg, #6495ed, #4169e1);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: linear-gradient(45deg, #4169e1, #1e40af);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 100, 0.4);
+        }
+        
+        .bg-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .bg-option {
+            height: 100px;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .bg-option:hover {
+            transform: scale(1.05);
+            border-color: #ff7f50;
+        }
+        
+        .bg-option.active {
+            border-color: #ff7f50;
+            box-shadow: 0 0 15px rgba(255, 127, 80, 0.5);
+        }
+        
+        .bg-option img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .instructions {
+            margin-top: 25px;
+            padding: 15px;
+            background: rgba(5, 10, 25, 0.4);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            margin-top: 20px;
+            font-size: 1rem;
+            opacity: 0.7;
+        }
+        
+        @keyframes scrollTracks {
+            0% {
+                transform: translateY(0);
+            }
+            100% {
+                transform: translateY(-50%);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes twinkle {
+            0%, 100% {
+                opacity: 0.2;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .songs-wrapper {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="starCanvas"></canvas>
+    
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-music"></i> 星河音乐墙</h1>
+            <p class="subtitle">在浩瀚星河中欣赏您最爱的歌曲，让音乐在宇宙中流淌</p>
+        </header>
+        
+        <div class="content">
+            <div class="song-container">
+                <h2 class="section-title"><i class="fas fa-list"></i> 歌曲展示</h2>
+                <div class="songs-wrapper">
+                    <div class="song-track" id="songTrack">
+                        <!-- Song items will be generated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <h2 class="section-title"><i class="fas fa-cog"></i> 控制面板</h2>
+                
+                <div class="control-group">
+                    <div class="control-title"><i class="fas fa-edit"></i> 导入歌曲名</div>
+                    <textarea id="songInput" placeholder="每行输入一个歌曲名&#10;例如：&#10;Stellar Dreams&#10;Galaxy Love&#10;Moonlight Sonata&#10;...">Stellar Dreams
+Galaxy Love
+Moonlight Sonata
+Cosmic Dance
+Nebula Melody
+Orion's Journey
+Milky Way Serenade
+Space Odyssey
+Aurora Symphony
+Celestial Harmony
+Infinity Echo
+Starfall Waltz
+Solar Flare
+Lunar Lullaby
+Comet Rider
+Black Hole Blues
+Supernova Beat
+Interstellar Journey
+Andromeda Dreams
+Pulsar Pulse</textarea>
+                    <button id="updateSongs"><i class="fas fa-sync-alt"></i> 更新歌曲列表</button>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-title"><i class="fas fa-image"></i> 更换背景</div>
+                    <div class="bg-options">
+                        <div class="bg-option active" data-bg="stars">
+                            <div style="background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); height: 100%;"></div>
+                        </div>
+                        <div class="bg-option" data-bg="nebula">
+                            <div style="background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c); height: 100%;"></div>
+                        </div>
+                        <div class="bg-option" data-bg="galaxy">
+                            <div style="background: linear-gradient(135deg, #141E30, #243B55, #141E30); height: 100%;"></div>
+                        </div>
+                        <div class="bg-option" data-bg="deep-space">
+                            <div style="background: linear-gradient(135deg, #000428, #004e92, #000428); height: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="instructions">
+                    <div class="control-title"><i class="fas fa-info-circle"></i> 使用说明</div>
+                    <ul>
+                        <li>在文本框中输入歌曲名，每行一首</li>
+                        <li>点击"更新歌曲列表"应用更改</li>
+                        <li>点击背景缩略图切换不同星空背景</li>
+                        <li>歌曲会自动向上滚动展示</li>
+                        <li>鼠标悬停在歌曲上会有高亮效果</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>星河音乐墙 &copy; 2023 | 让音乐在星辰大海中流淌</p>
+        </footer>
+    </div>
+    
+    <script>
+        // 初始化Canvas星空背景
+        const canvas = document.getElementById('starCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 设置canvas尺寸为窗口大小
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // 创建星星数组
+        const stars = [];
+        const starCount = 300;
+        
+        // 初始化星星
+        for (let i = 0; i < starCount; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 1.5 + 0.5,
+                opacity: Math.random() * 0.5 + 0.1,
+                speed: Math.random() * 0.05 + 0.01
+            });
+        }
+        
+        // 绘制星星
+        function drawStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制渐变背景
+            const gradient = ctx.createRadialGradient(
+                canvas.width / 2, canvas.height / 2, 0,
+                canvas.width / 2, canvas.height / 2, canvas.width
+            );
+            gradient.addColorStop(0, 'rgba(15, 12, 41, 0.8)');
+            gradient.addColorStop(1, 'rgba(10, 7, 30, 0.9)');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制每颗星星
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                
+                // 创建闪烁效果
+                const twinkle = Math.sin(Date.now() * star.speed) * 0.5 + 0.5;
+                const alpha = star.opacity * twinkle;
+                
+                ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                ctx.fill();
+            });
+            
+            requestAnimationFrame(drawStars);
+        }
+        
+        // 开始动画
+        drawStars();
+        
+        // 歌曲功能
+        const songInput = document.getElementById('songInput');
+        const songTrack = document.getElementById('songTrack');
+        const updateButton = document.getElementById('updateSongs');
+        
+        // 初始歌曲列表
+        const initialSongs = [
+            "Stellar Dreams", "Galaxy Love", "Moonlight Sonata", 
+            "Cosmic Dance", "Nebula Melody", "Orion's Journey",
+            "Milky Way Serenade", "Space Odyssey", "Aurora Symphony",
+            "Celestial Harmony", "Infinity Echo", "Starfall Waltz",
+            "Solar Flare", "Lunar Lullaby", "Comet Rider",
+            "Black Hole Blues", "Supernova Beat", "Interstellar Journey",
+            "Andromeda Dreams", "Pulsar Pulse"
+        ];
+        
+        // 生成歌曲元素
+        function generateSongElements(songs) {
+            // 创建两份相同的歌曲列表以实现无缝滚动
+            let html = '';
+            for (let i = 0; i < 2; i++) {
+                songs.forEach(song => {
+                    html += `
+                        <div class="song-item">
+                            <i class="fas fa-music"></i>
+                            ${song}
+                        </div>
+                    `;
+                });
+            }
+            return html;
+        }
+        
+        // 更新歌曲列表
+        function updateSongList() {
+            const songText = songInput.value.trim();
+            const songs = songText ? songText.split('\n') : initialSongs;
+            
+            // 过滤空行
+            const filteredSongs = songs.filter(song => song.trim() !== '');
+            
+            songTrack.innerHTML = generateSongElements(filteredSongs);
+        }
+        
+        // 初始加载歌曲
+        updateSongList();
+        
+        // 添加事件监听器
+        updateButton.addEventListener('click', updateSongList);
+        
+        // 背景切换功能
+        const bgOptions = document.querySelectorAll('.bg-option');
+        
+        bgOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // 移除所有active类
+                bgOptions.forEach(opt => opt.classList.remove('active'));
+                // 给当前选项添加active类
+                this.classList.add('active');
+                
+                // 根据选择更新背景
+                const bgType = this.getAttribute('data-bg');
+                updateBackground(bgType);
+            });
+        });
+        
+        // 更新背景
+        function updateBackground(type) {
+            let gradient;
+            
+            switch(type) {
+                case 'nebula':
+                    gradient = 'linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c)';
+                    break;
+                case 'galaxy':
+                    gradient = 'linear-gradient(135deg, #141E30, #243B55, #141E30)';
+                    break;
+                case 'deep-space':
+                    gradient = 'linear-gradient(135deg, #000428, #004e92, #000428)';
+                    break;
+                default: // stars
+                    gradient = 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)';
+            }
+            
+            document.body.style.background = gradient;
+        }
+        
+        // 添加星星点击效果
+        canvas.addEventListener('click', function(e) {
+            // 在点击位置添加一个"星光爆炸"效果
+            const x = e.clientX;
+            const y = e.clientY;
+            
+            // 创建粒子
+            for (let i = 0; i < 30; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 3 + 1;
+                const size = Math.random() * 3 + 1;
+                const life = Math.random() * 30 + 20;
+                
+                const particle = {
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    radius: size,
+                    alpha: 1,
+                    life: life
+                };
+                
+                // 临时添加粒子到星星数组
+                stars.push(particle);
+                
+                // 设置粒子移除
+                setTimeout(() => {
+                    const index = stars.indexOf(particle);
+                    if (index !== -1) stars.splice(index, 1);
+                }, life * 20);
+            }
+        });
+    </script>
+</body>
+</html>
